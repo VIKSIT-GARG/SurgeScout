@@ -10,10 +10,35 @@ except ImportError:
     pass
 
 # LLM
-AI_PROVIDER = os.getenv("AI_PROVIDER", "anthropic")
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openrouter").strip().lower()
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 AI_MODEL = os.getenv("AI_MODEL", "")
+
+def selected_api_key() -> str:
+    """Return only the explicitly selected provider's credential."""
+    return {
+        "openrouter": OPENROUTER_API_KEY,
+        "anthropic": ANTHROPIC_API_KEY,
+        "openai": OPENAI_API_KEY,
+    }.get(AI_PROVIDER, "")
+
+
+def selected_model() -> str:
+    """Resolve provider defaults, enforcing free-only OpenRouter routing."""
+    defaults = {
+        "openrouter": "openrouter/free",
+        "anthropic": "claude-sonnet-4-20250514",
+        "openai": "gpt-4o",
+    }
+    if AI_PROVIDER not in defaults:
+        raise RuntimeError("AI_PROVIDER must be openrouter, anthropic or openai.")
+    model = AI_MODEL.strip() or defaults[AI_PROVIDER]
+    if AI_PROVIDER == "openrouter" and model != "openrouter/free" and not model.endswith(":free"):
+        raise RuntimeError("OpenRouter requires openrouter/free or a model ID ending in :free; paid models are disabled.")
+    return model
+
 
 # Moltbook
 MOLTBOOK_API_URL = os.getenv("MOLTBOOK_API_URL", "https://www.moltbook.com")

@@ -53,7 +53,7 @@ async def lifespan(application):
 app = FastAPI(
     title="SurgeScout",
     description="AI Deal Flow Agent for Internet Capital Markets on SURGE",
-    version="1.2.0",
+    version="1.2.1",
     lifespan=lifespan,
 )
 
@@ -159,7 +159,7 @@ def index():
 
 @app.get("/api/health")
 def health():
-    has_key = bool(config.OPENAI_API_KEY if config.AI_PROVIDER == "openai" else config.ANTHROPIC_API_KEY)
+    has_key = bool(config.selected_api_key())
     return {
         "status": "ok",
         "scheduler": _scheduler.status(),

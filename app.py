@@ -34,7 +34,7 @@ def main():
     port = int(os.getenv("PORT", 0)) or args.port or config.PORT
     host = args.host or config.HOST
 
-    has_key = bool(config.ANTHROPIC_API_KEY or config.OPENAI_API_KEY)
+    has_key = bool(config.selected_api_key())
 
     print()
     print("  SURGESCOUT — AI Deal Flow Agent")

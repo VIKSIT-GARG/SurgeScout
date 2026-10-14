@@ -72,6 +72,16 @@ for projects with genuine utility, traction, and a clear tokenomics model.
 
 def _get_llm_client():
     """Get the appropriate LLM client."""
+    config.selected_model()  # Reject paid OpenRouter routes before constructing a client.
+    if config.AI_PROVIDER == "openrouter":
+        if not config.OPENROUTER_API_KEY:
+            raise RuntimeError("OPENROUTER_API_KEY is required for the openrouter provider.")
+        import openai
+        return "openrouter", openai.AsyncOpenAI(
+            api_key=config.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1",
+            max_retries=0,  # Batch retry pacing owns quota-consuming retries.
+        )
     if config.AI_PROVIDER == "anthropic":
         if not config.ANTHROPIC_API_KEY:
             raise RuntimeError("ANTHROPIC_API_KEY is required for the anthropic provider.")
@@ -82,7 +92,7 @@ def _get_llm_client():
             raise RuntimeError("OPENAI_API_KEY is required for the openai provider.")
         import openai
         return "openai", openai.AsyncOpenAI(api_key=config.OPENAI_API_KEY)
-    raise RuntimeError("AI_PROVIDER must be anthropic or openai.")
+    raise RuntimeError("AI_PROVIDER must be openrouter, anthropic or openai.")
 
 
 async def _call_llm(system: str, user: str) -> str:
@@ -91,7 +101,7 @@ async def _call_llm(system: str, user: str) -> str:
 
     try:
         if provider == "anthropic":
-            model = config.AI_MODEL or "claude-sonnet-4-20250514"
+            model = config.selected_model()
             resp = await client.messages.create(
                 model=model,
                 max_tokens=2000,
@@ -100,7 +110,7 @@ async def _call_llm(system: str, user: str) -> str:
             )
             return resp.content[0].text
         else:
-            model = config.AI_MODEL or "gpt-4o"
+            model = config.selected_model()
             resp = await client.chat.completions.create(
                 model=model,
                 max_tokens=2000,

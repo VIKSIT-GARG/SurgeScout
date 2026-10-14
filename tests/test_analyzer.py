@@ -123,9 +123,11 @@ async def test_batch_delay_keeps_event_loop_responsive(monkeypatch):
 
 
 @pytest.mark.anyio
-@pytest.mark.parametrize('provider', ['anthropic', 'openai'])
+@pytest.mark.parametrize('provider', ['anthropic', 'openai', 'openrouter'])
 async def test_async_sdk_is_awaited_and_closed(provider, monkeypatch):
     from types import SimpleNamespace
+    monkeypatch.setattr(analyzer.config, 'AI_PROVIDER', provider)
+    monkeypatch.setattr(analyzer.config, 'AI_MODEL', '')
     client = SimpleNamespace(close=AsyncMock())
     if provider == 'anthropic':
         client.messages = SimpleNamespace(create=AsyncMock(return_value=SimpleNamespace(
