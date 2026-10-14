@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CLI: Run the full SurgeScout pipeline (Scout → Analyze → Report)."""
 
+import asyncio
 import json
 import sys
 import os
@@ -11,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s", datefmt="%H:%M:%S")
 
 
-def main():
+async def main():
     import argparse
     parser = argparse.ArgumentParser(description="SurgeScout Full Pipeline")
     parser.add_argument("--submolts", nargs="+", default=["lablab", "cryptocurrency", "defi", "agents"])
@@ -24,7 +25,7 @@ def main():
 
     # 1. Scout
     print("\n=== PHASE 1: SCOUTING ===")
-    projects = scout_moltbook(submolts=args.submolts)
+    projects = await scout_moltbook(submolts=args.submolts)
     print(f"Found {len(projects)} project candidates\n")
 
     if not projects:
@@ -33,7 +34,7 @@ def main():
 
     # 2. Analyze
     print("=== PHASE 2: ANALYZING ===")
-    analyses = analyze_batch(projects[:5], min_score=args.min_score)
+    analyses = await analyze_batch(projects[:5], min_score=args.min_score)
     print(f"Analyzed {len(analyses)} projects above threshold {args.min_score}\n")
 
     # 3. Report
@@ -56,4 +57,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
