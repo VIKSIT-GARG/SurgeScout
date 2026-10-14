@@ -1,6 +1,7 @@
 """SurgeScout configuration."""
 
 import os
+import math
 
 try:
     from dotenv import load_dotenv
@@ -30,7 +31,13 @@ WALLET_PRIVATE_KEY = os.getenv("WALLET_PRIVATE_KEY", "")
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8899"))
 SECRET_KEY = os.getenv("SECRET_KEY", "surgescout-dev-key")
+API_KEY = os.getenv("API_KEY", "")
+SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "false").lower() in ("1", "true", "yes")
+SCOUT_INTERVAL_MINUTES = float(os.getenv("SCOUT_INTERVAL_MINUTES", "60"))
+if not math.isfinite(SCOUT_INTERVAL_MINUTES) or SCOUT_INTERVAL_MINUTES <= 0:
+    raise ValueError("SCOUT_INTERVAL_MINUTES must be positive")
 
 # Paths
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
+DATABASE_PATH = os.getenv("DATABASE_PATH") or os.path.join(DATA_DIR, "surgescout.db")
