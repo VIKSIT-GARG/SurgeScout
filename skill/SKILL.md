@@ -31,11 +31,12 @@ You operate on a repeating cycle: **Scout → Analyze → Advise → Launch → 
 
 ## How To Run The Pipeline
 
-The SurgeScout backend runs at `http://localhost:8899`. Use these endpoints:
+The SurgeScout backend runs at `http://localhost:8899`. Every request requires the configured `API_KEY` in the `X-API-Key` header. Load it securely into the calling environment; never print, commit or place it in a URL. Use these endpoints:
 
 ### Full Autonomous Pipeline
 ```bash
 curl -X POST http://localhost:8899/api/pipeline \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"submolts": ["lablab", "cryptocurrency", "defi", "agents"]}'
 ```
@@ -46,6 +47,7 @@ This runs Scout → Analyze → Report in one call.
 **Scout Moltbook:**
 ```bash
 curl -X POST http://localhost:8899/api/scout \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"submolts": ["lablab", "defi", "agents"]}'
 ```
@@ -53,6 +55,7 @@ curl -X POST http://localhost:8899/api/scout \
 **Analyze a project:**
 ```bash
 curl -X POST http://localhost:8899/api/analyze \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"project_id": "abc123"}'
 ```
@@ -60,6 +63,7 @@ curl -X POST http://localhost:8899/api/analyze \
 **Analyze all scouted projects:**
 ```bash
 curl -X POST http://localhost:8899/api/analyze \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"min_score": 40}'
 ```
@@ -67,6 +71,7 @@ curl -X POST http://localhost:8899/api/analyze \
 **Prepare a launch proposal:**
 ```bash
 curl -X POST http://localhost:8899/api/launch \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"analysis_index": 0, "chain": "base"}'
 ```
@@ -74,20 +79,21 @@ curl -X POST http://localhost:8899/api/launch \
 **Post report to Moltbook:**
 ```bash
 curl -X POST http://localhost:8899/api/moltbook/report \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
 **View dashboard:**
-Open `http://localhost:8899` in a browser.
+Open `http://localhost:8899` in a browser and enter the configured API key. Clear demo mode before live scouting, analysis or publishing.
 
 ## Optional Scheduled Tasks
 
-After explicit user authorization, set up a cron job to run the pipeline every 4 hours:
+After explicit user authorization, enable the built-in scheduler with `SCHEDULER_ENABLED=true` and `SCOUT_INTERVAL_MINUTES=240`, then restart the server. Alternatively, configure OpenClaw scheduling with the authenticated request below; use only one scheduler:
 
 ```
 Schedule: every 4 hours
-Action: POST http://localhost:8899/api/pipeline with body {"submolts": ["lablab", "cryptocurrency", "defi"]}
+Action: POST http://localhost:8899/api/pipeline with X-API-Key header and body {"submolts": ["lablab", "cryptocurrency", "defi"]}
 ```
 
 This keeps the agent continuously discovering and analyzing new projects.

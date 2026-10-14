@@ -1,5 +1,16 @@
 # Version history
 
+## 1.2.0 — 2026-10-14
+
+- Phase 1: SQLModel-backed SQLite persistence and legacy JSON migration; demo fixtures remain isolated.
+- Async LLM SDKs, Moltbook HTTP and SURGE reads; nonblocking retry delays and async CLI entrypoints.
+- Opt-in APScheduler jobs with configurable intervals, serialized pipeline runs and lifecycle cleanup.
+- Fail-closed API-key middleware for all HTTP resources, dashboard sign-in and setup-generated keys.
+- Mocked regression coverage for persistence/migration, auth, scheduling and async integrations.
+- Validation: 106 tests passed on Linux; compilation and diff checks passed. A real-server smoke verified API authentication, demo guards and restart isolation. Browser sign-in remains unverified because Chromium was unavailable.
+
+Scheduled work does not publish reports or deploy tokens. Multi-worker/distributed scheduling and real on-chain deployment remain future work. Native Windows/macOS installation and credentialed external-service flows remain unverified.
+
 ## 1.1.0 — 2026-10-13
 
 - Strict five-dimension scoring and tokenomics validation; failures do not become scored results.

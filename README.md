@@ -4,13 +4,13 @@
 
 SurgeScout is an autonomous AI agent built on [OpenClaw](https://github.com/openclaw/openclaw) that discovers promising projects on [Moltbook](https://www.moltbook.com), analyzes their tokenization potential, and prepares token launch proposals for the [SURGE](https://surge.xyz) launchpad.
 
-> The current release runs on demand. OpenClaw can schedule it; a built-in scheduler and real on-chain deployment remain future work.
+> Phase 1 adds SQLite persistence, async integrations, API-key protection and an opt-in background scheduler. Real on-chain deployment remains future work.
 
 Current scope: scout → analyze → advise → prepare → generate reports. Publishing reports is a separate authenticated action. Demo data is fictional and explicitly labeled.
 
 ## How It Works
 
-SurgeScout runs a continuous pipeline:
+SurgeScout runs this pipeline on demand or at an explicitly enabled interval:
 
 ```
 Scout → Analyze → Advise → Launch → Report
@@ -42,7 +42,7 @@ Each project is evaluated on 5 dimensions:
 
 ## Features
 
-- **On-demand Scouting** — Scans 5+ Moltbook submolts for project signals
+- **Scouting** — Scans Moltbook submolts for project signals, on demand or with opt-in scheduling
 - **LLM Analysis** — Deep project evaluation via Claude or GPT
 - **Tokenomics Engine** — Generates ticker, supply, bonding curve recommendations
 - **Launch Preparation** — Generates proposed Base/Solana token settings; does not deploy or sign transactions
@@ -50,6 +50,8 @@ Each project is evaluated on 5 dimensions:
 - **Web Dashboard** — Real-time visualization of agent activity
 - **OpenClaw Skill** — Drop-in skill for any OpenClaw agent
 - **Pipeline API** — One endpoint scouts, analyzes, generates reports and prepares eligible launch proposals; publishing is separate
+- **Reliable State** — SQLite through SQLModel stores live projects, analyses, proposals and posting history across restarts
+- **API Protection** — Configurable `X-API-Key` authentication for API requests
 
 ## Quick Start
 
@@ -104,9 +106,11 @@ SurgeScout/
 ├── src/
 │   ├── config.py               # Configuration from .env
 │   ├── server.py               # FastAPI server + all routes
+│   ├── database.py             # SQLModel SQLite storage + legacy migration
+│   ├── scheduler.py            # Opt-in APScheduler pipeline jobs
 │   ├── moltbook.py             # Moltbook API client + project extraction
 │   ├── analyzer.py             # LLM-powered analysis engine
-│   └── launcher.py             # SURGE launchpad + on-chain deployment
+│   └── launcher.py             # Launch proposals + async SURGE reads
 ├── skill/
 │   ├── SKILL.md                # OpenClaw skill definition
 │   └── references/
@@ -124,7 +128,7 @@ SurgeScout/
 ## Tech Stack
 
 - **Optional orchestration**: [OpenClaw](https://github.com/openclaw/openclaw) — self-hosted AI agent
-- **Backend**: Python + FastAPI
+- **Backend**: Python + FastAPI, SQLModel/SQLite, APScheduler
 - **AI**: Anthropic Claude / OpenAI GPT (configurable)
 - **Launch proposals**: Base/Solana configuration only; real on-chain integration is future work
 - **Social**: Moltbook API (agent posting)
@@ -135,6 +139,7 @@ SurgeScout/
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `AI_PROVIDER` | `anthropic` | LLM provider |
+| `AI_MODEL` | provider default | Optional model override |
 | `ANTHROPIC_API_KEY` | - | Claude API key |
 | `OPENAI_API_KEY` | - | OpenAI API key |
 | `MOLTBOOK_API_URL` | `https://www.moltbook.com` | Moltbook API |
@@ -144,12 +149,28 @@ SurgeScout/
 | `SURGE_API_URL` | `https://api.surge.xyz` | SURGE API |
 | `BASE_RPC_URL` | `https://sepolia.base.org` | Base RPC |
 | `WALLET_PRIVATE_KEY` | - | Reserved for future deployment; current release does not use it |
+| `API_KEY` | empty | Required API/dashboard access key; setup generates one; empty fails closed |
+| `DATABASE_PATH` | `data/surgescout.db` | SQLite database file |
+| `SCHEDULER_ENABLED` | `false` | Explicitly enable recurring paid analysis |
+| `SCOUT_INTERVAL_MINUTES` | `60` | Positive interval between scheduled pipelines |
 
 ## Validation and Rollback
 
-Run `python -m pip install pytest` then `python -m pytest -q`. Tests mock paid LLM calls and external integrations. The local server binds to loopback by default; authenticated public hosting remains roadmap work. Keep it local until that is implemented.
+Run `python -m pip install -r requirements.txt pytest pytest-asyncio` then `python -m pytest -q`. Tests mock paid LLM calls and external integrations, including state persistence, legacy migration, API authentication and scheduler behavior. Native Windows/macOS setup and credentialed provider, Moltbook and OpenClaw flows require separate validation.
 
-Major changes are separate commits. Review `CHANGELOG.md` and `git log --oneline`. To undo a change without rewriting shared history, use `git revert <commit-sha>` then push the revert. Configuration and runtime state are ignored by Git; back up `.env` and `data/state.json` separately.
+The setup script generates `API_KEY` in `.env` without overwriting an existing key. If starting manually, configure a long random `API_KEY`, restart the server and enter that key in the dashboard when prompted. Programmatic API requests send the same key:
+
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" http://127.0.0.1:8899/api/state
+```
+
+Every HTTP resource requires the key, including health, docs and static assets. An unauthenticated request to `/` receives only a sign-in page (HTTP 401), with no application state. An unset `API_KEY` denies access (HTTP 503). The dashboard keeps the key in tab memory; refreshing requires signing in again. CLI scripts (`scripts/scout.py`, `scripts/analyze.py`, `scripts/pipeline.py`) invoke integrations directly, so they use provider/Moltbook credentials rather than the HTTP API key. Keep the default loopback binding for local use. Public hosting additionally needs HTTPS and deployment-specific hardening.
+
+Hosting templates omit unauthenticated HTTP health probes because `/api/health` requires the key. Configure authenticated monitoring and a persistent volume for `DATABASE_PATH` before hosted use; an ephemeral filesystem will lose data on redeployment. Live browser sign-in still needs separate browser validation.
+
+Scheduling is disabled by default. Set `SCHEDULER_ENABLED=true` and `SCOUT_INTERVAL_MINUTES=60`, then restart to enable it. Scheduled runs can incur provider charges. They prepare proposals and reports but do not publish reports or deploy tokens; demo mode pauses scheduled work. Clear demo mode before running live scouting, analysis or publishing. Run a single server process for scheduling and state mutations; multi-worker/distributed scheduling is outside Phase 1.
+
+Major changes are separate commits. Review `CHANGELOG.md` and `git log --oneline`. To undo a change without rewriting shared history, use `git revert <commit-sha>` then push the revert. Configuration and runtime state are ignored by Git; back up `.env` and the SQLite database separately. Stop the server before copying `data/surgescout.db` (or your configured database file). Preserve the legacy `data/state.json` backup when migrating; reverting to pre-Phase-1 code does not convert new SQLite records back into JSON.
 
 ## Future Roadmap
 
@@ -157,14 +178,14 @@ Development is organized into 4 phases, each building on the last.
 
 ### Phase 1 — Foundation & Reliability
 
-Make the core pipeline production-ready.
+Implemented foundation; live-service and native-platform verification remain separate from mocked local tests.
 
-- **SQLite Database** — Replace the in-memory `_state` dict + JSON file with SQLite via SQLModel for persistent, queryable storage across restarts
-- **Async I/O** — Convert all LLM calls, Moltbook fetches, and SURGE requests from blocking `httpx.Client` + `time.sleep()` to non-blocking `httpx.AsyncClient` + `asyncio`
-- **Background Scheduler** — Add `APScheduler` so the scout→analyze pipeline runs automatically on a configurable interval instead of requiring manual triggers
-- **Moltbook Auth** — Wire up `MOLTBOOK_AUTH_TOKEN` so posting to Moltbook actually authenticates
-- **API Key Middleware** — Protect all endpoints behind a simple `X-API-Key` header check
-- **Tests** — Add `pytest` integration tests for endpoints, analyzer, and Moltbook client with mocked HTTP/LLM calls
+- **SQLite Database** — SQLModel-backed SQLite storage with persistent live state and migration from legacy `data/state.json`; fictional demo fixtures stay outside live persistence.
+- **Async I/O** — Async provider SDKs and `httpx.AsyncClient` for Moltbook/SURGE, with `asyncio.sleep()` for retry pacing.
+- **Background Scheduler** — APScheduler runs scout→analyze→prepare→report at a configurable interval when explicitly enabled; serialized mutations avoid overlapping pipelines.
+- **Moltbook Auth** — Authenticated publishing uses `MOLTBOOK_AUTH_TOKEN` and the canonical Moltbook origin; publishing stays explicit.
+- **API Key Middleware** — `X-API-Key` protects every HTTP resource, with a state-free dashboard sign-in page; missing configuration fails closed.
+- **Tests** — Mocked integration and regression coverage for endpoints, analyzer, Moltbook, database migration and scheduling.
 
 ### Phase 2 — Smarter Intelligence
 
