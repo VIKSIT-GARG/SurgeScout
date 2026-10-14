@@ -154,6 +154,40 @@
             display: flex; height: 6px; border-radius: 3px; overflow: hidden; gap: 2px;
         }
         .verdict-bar > div { border-radius: 2px; transition: width 0.4s ease; }
+
+        :root { --bg:#080f1c; --surface:#101c2e; --surface2:#17263c; --surface3:#21344f; --border:#263b54; --border-hover:#456483; --text:#edf5ff; --text2:#afbed3; --text3:#8c9eb8; --red:#3b82f6; --red-light:#7db5ff; --red-dim:rgba(59,130,246,.12); --red-glow:rgba(59,130,246,.2); --green:#5ce0bf; --blue:#8ebaff; --yellow:#f6c76f; }
+        body { background:radial-gradient(ellipse at 15% 0%, #142a43 0%, transparent 45%),var(--bg); }
+        .glass { background:rgba(8,15,28,.92); }
+        .card,.stat-card { border-radius:18px; box-shadow:0 8px 28px #03081230; }
+        .stat-card { text-align:left; padding:24px; }
+        .explorer { display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px; }
+        .chart-heading { font-size:18px;font-weight:700;letter-spacing:-.4px; }
+        .chart-note { color:var(--text2);font-size:12px;line-height:1.7; }
+        .control { background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px;max-width:100%; }
+        .chart-selects { display:flex;gap:12px;flex-wrap:wrap;margin:18px 0; }
+        .chart-selects label { flex:1;min-width:150px;font-size:12px;color:var(--text2); }
+        .chart-selects select { display:block;width:100%;margin-top:6px; }
+        .radar-web { width:100%;max-height:340px; }
+        .metric-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0; }
+        .metric { background:var(--surface2);border-radius:12px;padding:14px; }
+        .metric strong { display:block;font-size:24px; }
+        .metric span { font-size:11px;color:var(--text2); }
+        .rank-row { display:grid;grid-template-columns:minmax(90px,1fr) 2fr 42px;gap:12px;align-items:center;font-size:12px;padding:8px 0; }
+        .rank-row span:first-child { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+        .rank-track { height:9px;border-radius:9px;background:var(--surface3);overflow:hidden; }
+        .rank-track i { display:block;height:100%;background:linear-gradient(90deg,#539afa,#5ce0bf);border-radius:9px; }
+        .distribution { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end;height:125px;margin:16px 0 30px; }
+        .distribution div { height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;font-size:11px;color:var(--text2);gap:5px; }
+        .distribution i { width:65%;min-height:2px;border-radius:6px 6px 0 0;background:#7db5ff; }
+        details { margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-size:12px;line-height:1.8; }
+        summary { cursor:pointer;color:var(--red-light);font-weight:600; }
+        details ul { padding-left:18px;color:var(--text2); }
+        .detail-columns { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px; }
+        .detail-columns h4 { font-weight:700;margin-bottom:4px; }
+        .project-body { white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text2); }
+        button:focus-visible,select:focus-visible,summary:focus-visible { outline:2px solid var(--green);outline-offset:4px; }
+        @media(max-width:760px) { .explorer,.detail-columns { grid-template-columns:1fr; } .metric-grid { gap:6px; } .metric { padding:10px; } .metric strong { font-size:20px; } }
+        @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important;transition:none!important; } }
     </style>
 </head>
 <body>
@@ -179,6 +213,10 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-6 space-y-5">
+
+        <section class="flex flex-wrap justify-between items-end gap-4">
+            <div><p class="mono text-xs text-[var(--green)] mb-2">SIGNALHARBOR / INTELLIGENCE DESK</p><h2 class="text-3xl font-bold tracking-tight">Find the signal. Understand the opportunity.</h2><p class="chart-note mt-2">Explore Moltbook discoveries, five-dimensional assessments, reports and prepared token proposals.</p></div>
+        </section>
         <!-- Stats Row -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="stat-card active">
@@ -191,7 +229,7 @@
             </div>
             <div class="stat-card" id="cardLaunchReady">
                 <p class="text-3xl font-bold mono text-[var(--green)]" id="statLaunchReady">0</p>
-                <p class="text-[11px] text-[var(--text3)] mono mt-1">LAUNCH READY</p>
+                <p class="text-[11px] text-[var(--text3)] mono mt-1">STRONG CANDIDATES</p>
             </div>
             <div class="stat-card" style="cursor:pointer" onclick="switchTab('moltbook', document.querySelectorAll('.tab')[3])">
                 <p class="text-3xl font-bold mono text-[var(--red-light)]" id="statPosts">0</p>
@@ -224,6 +262,23 @@
             <div class="grid grid-cols-4 gap-3 text-center" id="summaryGrid"></div>
         </div>
 
+
+        <section class="card" aria-label="Scoring analytics">
+            <div class="flex flex-wrap justify-between gap-2"><div><h2 class="chart-heading">The score explorer</h2><p class="chart-note">Select a project to see its scoring web. Compare against another assessment.</p></div><span id="analyticsMode" class="badge badge-signal">Waiting for data</span></div>
+            <div class="explorer">
+                <div>
+                    <div class="chart-selects"><label>Project<select id="scoreProject" class="control" onchange="renderAnalytics()"></select></label><label>Compare with<select id="scoreCompare" class="control" onchange="renderAnalytics()"></select></label></div>
+                    <div id="scoreWeb"></div><p id="scoreCaption" class="chart-note"></p>
+                    <p class="chart-note mt-3">Overall weighting: Market 25% · Team 20% · Technical 25% · Tokenomics 20% · Traction 10%. Each dimension is scored out of 100.</p>
+                </div>
+                <div>
+                    <div class="metric-grid"><div class="metric"><strong id="metricAverage">—</strong><span>Average score / 100</span></div><div class="metric"><strong id="metricBest">—</strong><span>Best score / 100</span></div><div class="metric"><strong id="metricPrepared">0</strong><span>Prepared proposals</span></div></div>
+                    <h3 class="text-sm font-semibold">Project ranking</h3><div id="scoreRanking"></div>
+                    <h3 class="text-sm font-semibold mt-4">Score distribution</h3><div id="scoreDistribution" class="distribution"></div>
+                    <p id="analyticsSummary" class="chart-note"></p>
+                </div>
+            </div>
+        </section>
         <!-- Tabs -->
         <div class="flex gap-2 overflow-x-auto pb-1" id="tabBar">
             <div class="tab active" onclick="switchTab('projects', this)">Scouted <span class="tab-count" id="tabCountProjects">0</span></div>
@@ -366,7 +421,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-8 text-[11px] text-[var(--text3)] mono space-y-2 border-t border-[var(--border)]">
-        <p>SignalHarbor v1.0 &mdash; SURGE x OpenClaw Hackathon &mdash; lablab.ai</p>
+        <p>SignalHarbor &mdash; AI project intelligence · Launch preparation only</p>
         <p class="flex items-center justify-center gap-4">
             <a href="https://github.com/VIKSIT-GARG" target="_blank" class="hover:text-[var(--red-light)] transition">GitHub</a>
             <a href="https://www.moltbook.com" target="_blank" class="hover:text-[var(--red-light)] transition">Moltbook</a>
@@ -559,7 +614,7 @@
 
         document.getElementById('statScouted').textContent = projects.length;
         document.getElementById('statAnalyzed').textContent = analyses.length;
-        const lr = state.launch_ready_count || analyses.filter(a => a.verdict === 'STRONG_LAUNCH').length;
+        const lr = state.launch_ready_count ?? analyses.filter(a => !a.error && a.verdict === 'STRONG_LAUNCH' && a.overall_score >= 75).length;
         document.getElementById('statLaunchReady').textContent = lr;
         document.getElementById('statPosts').textContent = moltbookPostsCount;
 
@@ -579,6 +634,7 @@
         renderLaunches();
         updateReportSelect();
         updateVerdictSummary();
+        renderAnalytics();
     }
 
     function renderProjects() {
@@ -588,7 +644,7 @@
             el.innerHTML = '<div class="card text-center text-[var(--text2)] py-16"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20role%3D%22img%22%20aria-label%3D%22SignalHarbor%22%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22%23e53935%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M14%2042h36M22%2034V22m10%2012V14m10%2020V26%22%20stroke%3D%22white%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M19%2049c5%204%209%204%2013%200%204%204%208%204%2013%200%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3C%2Fsvg%3E%0A xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 rx=%228%22 fill=%22%23e53935%22/%3E%3Ctext x=%2220%22 y=%2229%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2228%22%3ES%3C/text%3E%3C/svg%3E" alt="" class="w-12 h-12 mx-auto mb-4 opacity-20"><p class="text-sm mono">No projects scouted yet</p><p class="text-xs text-[var(--text3)]">Click <strong class="text-[var(--red-light)]">Run Full Pipeline</strong> to start</p></div>';
             return;
         }
-        el.innerHTML = projects.slice(0, 50).map((p, i) => {
+        el.innerHTML = projects.map((p, i) => {
             const sigs = [];
             if ((p.github_urls || []).length) sigs.push('github');
             if ((p.token_mentions || []).length) sigs.push('token');
@@ -614,9 +670,10 @@
                         <p class="text-[10px] text-[var(--text3)]">votes</p>
                     </div>
                 </div>
+                <details><summary>Read full project discovery</summary><p class="project-body">${esc(p.body || 'No description supplied.')}</p><p class="chart-note">Source ID: ${esc(p.id || p.post_id || 'Unavailable')} · Comments: ${esc(p.comments ?? p.comment_count ?? 'Unavailable')}</p></details>
             </div>`;
         }).join('');
-        if (projects.length > 50) el.innerHTML += `<p class="text-center text-[11px] text-[var(--text3)] mono py-2">+ ${projects.length-50} more</p>`;
+
     }
 
     function renderAnalyses() {
@@ -642,7 +699,7 @@
                         <p class="text-xs text-[var(--text2)] mt-1 line-clamp-2">${esc(a.summary||'')}</p>
                     </div>
                     <div class="text-right flex-shrink-0">
-                        <p class="text-2xl font-bold mono ${isL?'text-[var(--green)]':''}">${esc(a.overall_score||0)}</p>
+                        <p class="text-2xl font-bold mono ${isL?'text-[var(--green)]':''}">${a.error ? '—' : esc(a.overall_score ?? '—')}</p>
                         <p class="text-[10px] text-[var(--text3)] mono">/100</p>
                     </div>
                 </div>
@@ -653,6 +710,14 @@
                     ${scoreBar('Token',s.tokenomics_feasibility)}
                     ${scoreBar('Traction',s.traction)}
                 </div>
+                <details><summary>Evidence, risks &amp; tokenomics</summary>
+                    <p class="chart-note mt-2">${esc(a.summary || 'No summary supplied.')}</p>
+                    <div class="detail-columns"><div><h4>Strengths</h4>${detailList(a.strengths)}</div><div><h4>Risks &amp; missing evidence</h4>${detailList(a.risks)}</div></div>
+                    <h4 class="font-semibold mt-3">Recommendation</h4><p class="chart-note">${esc(a.recommendation || a.error || 'No recommendation supplied.')}</p>
+                    <h4 class="font-semibold mt-3">Token rationale</h4><p class="chart-note">${esc(a.tokenomics_advice?.rationale || 'No token rationale supplied.')}</p>
+                    <p class="chart-note">Suggested initial price: ${a.tokenomics_advice?.initial_price_usd != null ? '$' + esc(a.tokenomics_advice.initial_price_usd) : 'Unavailable'} · Analysis: ${esc(a._analyzed_at || 'Timestamp unavailable')}</p>
+                    ${analysisSource(a)}
+                </details>
                 ${a.tokenomics_advice?`
                 <div class="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-3 text-[11px] text-[var(--text3)] mono">
@@ -721,6 +786,7 @@
                         <p class="text-xl font-bold mono mt-1">${esc(l.result?.analysis_score||'?')}</p>
                     </div>
                 </div>
+                <details><summary>View complete prepared proposal</summary><pre class="project-body">${esc(JSON.stringify(l.result || {}, null, 2))}</pre></details>
             </div>
         `).join('');
     }
@@ -734,6 +800,47 @@
             sel.innerHTML += `<option value="${i}">${esc(a.project_name||'?')} (${esc(a.overall_score||0)})${tag}</option>`;
         });
         sel.value = cur;
+    }
+
+
+    const scoreDimensions = ['market_fit','team_signal','technical_quality','tokenomics_feasibility','traction'];
+    const scoreLabels = ['Market fit','Team signal','Technical','Tokenomics','Traction'];
+    function validAssessment(a) {
+        return !a.error && typeof a.overall_score === 'number' && Number.isFinite(a.overall_score) && a.overall_score >= 0 && a.overall_score <= 100 && scoreDimensions.every(k => typeof a.scores?.[k] === 'number' && Number.isFinite(a.scores[k]) && a.scores[k] >= 0 && a.scores[k] <= 100);
+    }
+    function detailList(items) { return Array.isArray(items) && items.length ? '<ul>' + items.map(v => '<li>' + esc(v) + '</li>').join('') + '</ul>' : '<p class="chart-note">Not supplied.</p>'; }
+    function analysisSource(a) {
+        const p = a._source_project_id == null ? null : (state.scouted_projects || []).find(p => String(p.id || p.post_id) === String(a._source_project_id));
+        return p ? `<h4 class="font-semibold mt-3">Source discovery</h4><p class="chart-note">${esc(p.title)} · ${esc(p.author || 'Unknown author')} · m/${esc(p.submolt || 'Unknown')} · ${esc(p.votes ?? 0)} votes</p>${(p.github_urls || []).map(u => `<a class="chart-note" href="${safeUrl(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`).join('<br>')}` : '<p class="chart-note">Source discovery unavailable in this snapshot.</p>';
+    }
+    function radarWeb(a, b) {
+        const point = (i, value) => { const angle = i * 2 * Math.PI / 5 - Math.PI / 2; return [220 + Math.cos(angle) * value * 1.18,170 + Math.sin(angle) * value * 1.18]; };
+        const polygon = value => scoreDimensions.map((_,i) => point(i,value).join(',')).join(' ');
+        let shapes = [20,40,60,80,100].map(n => `<polygon points="${polygon(n)}" fill="none" stroke="#344962"/><text x="225" y="${170-n*1.18}" fill="#a8bad0" font-size="9">${n}</text>`).join('');
+        shapes += scoreDimensions.map((_,i) => { const end=point(i,100), label=point(i,137); return `<line x1="220" y1="170" x2="${end[0]}" y2="${end[1]}" stroke="#344962"/><text x="${label[0]}" y="${label[1]}" fill="#dceaff" text-anchor="middle" font-size="11">${scoreLabels[i]}</text>`; }).join('');
+        [a,b].filter(Boolean).forEach((item,j) => { const color=j?'#c4a4ff':'#5ce0bf'; shapes += `<polygon points="${scoreDimensions.map((k,i)=>point(i,item.scores[k]).join(',')).join(' ')}" fill="${color}" fill-opacity=".12" stroke="${color}" stroke-width="2"/>` + scoreDimensions.map((k,i)=>{const p=point(i,item.scores[k]);return `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${color}"><title>${esc(item.project_name)}: ${scoreLabels[i]} ${item.scores[k]}/100</title></circle>`;}).join(''); });
+        return `<svg class="radar-web" viewBox="0 0 440 350" role="img" aria-label="Five-dimensional score comparison"><title>${esc(a.project_name)} scoring web${b?' compared with '+esc(b.project_name):''}</title>${shapes}</svg>`;
+    }
+    function renderAnalytics() {
+        const all = state.analyses || [], valid = all.map((a,i)=>({a,i})).filter(({a})=>validAssessment(a));
+        const primary=document.getElementById('scoreProject'), compare=document.getElementById('scoreCompare');
+        const previous=primary.value, comparison=compare.value;
+        primary.innerHTML=valid.map(({a,i})=>`<option value="${i}">${esc(a.project_name || 'Unnamed')} · ${a.overall_score.toFixed(1)}</option>`).join('') || '<option value="">No scored projects</option>';
+        compare.innerHTML='<option value="">No comparison</option>'+valid.map(({a,i})=>`<option value="${i}">${esc(a.project_name || 'Unnamed')}</option>`).join('');
+        if(valid.some(({i})=>String(i)===previous)) primary.value=previous;
+        compare.value=valid.some(({i})=>String(i)===comparison)?comparison:'';
+        const selected=valid.find(({i})=>String(i)===primary.value)?.a, other=valid.find(({i})=>String(i)===compare.value)?.a;
+        document.getElementById('analyticsMode').textContent=state.demo_mode?'Fictional demo scores':'Current live snapshot';
+        document.getElementById('scoreWeb').innerHTML=selected?radarWeb(selected,other):'<p class="chart-note" style="padding:70px 0">Run Scout, then Analyze to build your scoring web. Load Demo to explore illustrative data.</p>';
+        document.getElementById('scoreCaption').textContent=selected?`${selected.project_name}: ${selected.overall_score.toFixed(1)}/100 (mint)${other?' · '+other.project_name+': '+other.overall_score.toFixed(1)+'/100 (lavender)':''}`:'No valid assessments available.';
+        const scores=valid.map(({a})=>a.overall_score);
+        document.getElementById('metricAverage').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';
+        document.getElementById('metricBest').textContent=scores.length?Math.max(...scores).toFixed(1):'—';
+        document.getElementById('metricPrepared').textContent=(state.launches || []).length;
+        document.getElementById('scoreRanking').innerHTML=[...valid].sort((a,b)=>b.a.overall_score-a.a.overall_score).map(({a})=>`<div class="rank-row"><span title="${esc(a.project_name)}">${esc(a.project_name)}</span><div class="rank-track"><i style="width:${a.overall_score}%"></i></div><strong>${a.overall_score.toFixed(1)}</strong></div>`).join('') || '<p class="chart-note">No scores to rank yet.</p>';
+        const bins=[0,0,0,0];scores.forEach(n=>bins[Math.min(3,Math.floor(n/25))]++);
+        document.getElementById('scoreDistribution').innerHTML=bins.map((n,i)=>`<div><span>${n} projects</span><i style="height:${n/Math.max(1,...bins)*80}px"></i><span>${['0–<25','25–<50','50–<75','75–100'][i]}</span></div>`).join('');
+        document.getElementById('analyticsSummary').textContent=`${valid.length} valid assessments · ${all.length-valid.length} failed or incomplete. Charts show the current snapshot, not historical performance. Prepared proposals have not been deployed on-chain.`;
     }
 
     function showRadar(scores) {

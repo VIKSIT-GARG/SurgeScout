@@ -1,5 +1,13 @@
 # Version history
 
+## 1.2.3 — 2026-10-14
+
+- Redesigned the dashboard with a navy, mint and blue palette, responsive analytics and expandable project details.
+- Added dependency-free SVG scoring webs, project comparisons, rankings, score distributions and snapshot averages.
+- Excluded incomplete/failed assessments from analytics; retained zero scores, explicit demo labeling and preparation-only launch status.
+- Exposed full source descriptions, assessment strengths/risks/recommendations, token rationale and prepared proposal payloads.
+- Validation: 124 backend tests pass; Node checks pass for chart comparison, zero scores, failed-score exclusion, escaping and empty-state reset. Browser visual verification was unavailable because the browser download failed.
+
 ## 1.2.2 — 2026-10-14
 
 - Rebranded current application, prompts, reports, logs, launcher metadata, setup paths, OpenClaw skill and documentation to SignalHarbor.
