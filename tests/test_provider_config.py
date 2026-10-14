@@ -73,6 +73,19 @@ def test_health_reports_selected_openrouter_credential(monkeypatch):
     assert server.health()['api_key_configured'] is False
 
 
+def test_database_upgrade_preserves_existing_file(tmp_path, monkeypatch):
+    monkeypatch.delenv('DATABASE_PATH', raising=False)
+    assert config.resolve_database_path(str(tmp_path)) == str(tmp_path / 'signalharbor.db')
+    original = tmp_path / 'existing-state.db'
+    original.touch()
+    assert config.resolve_database_path(str(tmp_path)) == str(original)
+    (tmp_path / 'other-state.db').touch()
+    with pytest.raises(RuntimeError, match='Multiple existing databases'):
+        config.resolve_database_path(str(tmp_path))
+    monkeypatch.setenv('DATABASE_PATH', str(original))
+    assert config.resolve_database_path(str(tmp_path)) == str(original)
+
+
 @pytest.mark.asyncio
 async def test_openrouter_http_payload_and_quota_failure_have_no_paid_fallback(monkeypatch):
     import json

@@ -8,7 +8,7 @@ import httpx
 
 from . import config
 
-log = logging.getLogger("surgescout.moltbook")
+log = logging.getLogger("signalharbor.moltbook")
 
 # ---------------------------------------------------------------------------
 # Moltbook client

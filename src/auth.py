@@ -6,10 +6,10 @@ from . import config
 
 LOGIN_HTML = '''<!doctype html><html lang="en"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SurgeScout sign in</title><style>body{background:#0d0d0f;color:#eee;font:16px system-ui;max-width:440px;margin:15vh auto;padding:24px}input,button{padding:12px;margin-top:16px;width:100%;box-sizing:border-box}button{cursor:pointer}</style>
-<h1>SurgeScout</h1><p>Enter the dashboard API_KEY configured in your .env file. Your key stays in this tab's memory; re-enter it after refreshing.</p>
+<title>SignalHarbor sign in</title><style>body{background:#0d0d0f;color:#eee;font:16px system-ui;max-width:440px;margin:15vh auto;padding:24px}input,button{padding:12px;margin-top:16px;width:100%;box-sizing:border-box}button{cursor:pointer}</style>
+<h1>SignalHarbor</h1><p>Enter the dashboard API_KEY configured in your .env file. Your key stays in this tab's memory; re-enter it after refreshing.</p>
 <form id="login"><label for="key">API key</label><input id="key" type="password" autocomplete="off" required><button>Unlock dashboard</button></form><p id="error" role="alert"></p>
-<script>document.getElementById('login').addEventListener('submit',async event=>{event.preventDefault();const key=document.getElementById('key').value;try{const response=await fetch('/',{headers:{'X-API-Key':key},credentials:'omit',redirect:'error',cache:'no-store'});if(!response.ok)throw new Error('Unable to sign in. Check your API key and server configuration.');const html=await response.text();window.__surgescoutKey=key;document.open();document.write(html);document.close();}catch(error){document.getElementById('error').textContent=error.message;}});</script></html>'''
+<script>document.getElementById('login').addEventListener('submit',async event=>{event.preventDefault();const key=document.getElementById('key').value;try{const response=await fetch('/',{headers:{'X-API-Key':key},credentials:'omit',redirect:'error',cache:'no-store'});if(!response.ok)throw new Error('Unable to sign in. Check your API key and server configuration.');const html=await response.text();window.__signalharborKey=key;document.open();document.write(html);document.close();}catch(error){document.getElementById('error').textContent=error.message;}});</script></html>'''
 
 
 class APIKeyMiddleware:

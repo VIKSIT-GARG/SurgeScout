@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI: Run the full SurgeScout pipeline (Scout → Analyze → Report)."""
+"""CLI: Run the full SignalHarbor pipeline (Scout → Analyze → Report)."""
 
 import asyncio
 import json
@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message
 
 async def main():
     import argparse
-    parser = argparse.ArgumentParser(description="SurgeScout Full Pipeline")
+    parser = argparse.ArgumentParser(description="SignalHarbor Full Pipeline")
     parser.add_argument("--submolts", nargs="+", default=["lablab", "cryptocurrency", "defi", "agents"])
     parser.add_argument("--min-score", type=int, default=30)
     parser.add_argument("--output", default=None, help="Save results to file")

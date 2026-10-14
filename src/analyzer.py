@@ -10,13 +10,13 @@ from decimal import Decimal, InvalidOperation
 
 from . import config
 
-log = logging.getLogger("surgescout.analyzer")
+log = logging.getLogger("signalharbor.analyzer")
 
 # ---------------------------------------------------------------------------
 # Scoring model
 # ---------------------------------------------------------------------------
 
-ANALYSIS_SYSTEM_PROMPT = """You are SurgeScout, an AI deal-flow analyst for Internet Capital Markets (ICM).
+ANALYSIS_SYSTEM_PROMPT = """You are SignalHarbor, an AI deal-flow analyst for Internet Capital Markets (ICM).
 You evaluate projects discovered on Moltbook (the AI agent social network) for their
 tokenization potential on the SURGE launchpad.
 
@@ -321,7 +321,7 @@ def generate_launch_report(analysis: dict) -> str:
     }.get(verdict, "[?]")
 
     lines = [
-        f"# {verdict_emoji} SurgeScout Analysis: {analysis.get('project_name', '?')}",
+        f"# {verdict_emoji} SignalHarbor Analysis: {analysis.get('project_name', '?')}",
         "",
         f"**Overall Score:** {analysis.get('overall_score', 0)}/100 — {verdict}",
         "",
@@ -363,6 +363,6 @@ def generate_launch_report(analysis: dict) -> str:
         lines.extend(["## Recommendation", analysis["recommendation"], ""])
 
     lines.append("---")
-    lines.append("*Powered by SurgeScout — AI Deal Flow for Internet Capital Markets*")
+    lines.append("*Powered by SignalHarbor — AI Deal Flow for Internet Capital Markets*")
 
     return "\n".join(lines)

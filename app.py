@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SurgeScout — AI Deal Flow Agent for Internet Capital Markets.
+"""SignalHarbor — AI Deal Flow Agent for Internet Capital Markets.
 
 Usage:
     python app.py                # Start on http://localhost:8899
@@ -22,7 +22,7 @@ def main():
         datefmt="%H:%M:%S",
     )
 
-    parser = argparse.ArgumentParser(description="SurgeScout")
+    parser = argparse.ArgumentParser(description="SignalHarbor")
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--host", default=None)
     args = parser.parse_args()
@@ -37,7 +37,7 @@ def main():
     has_key = bool(config.selected_api_key())
 
     print()
-    print("  SURGESCOUT — AI Deal Flow Agent")
+    print("  SIGNALHARBOR — AI Deal Flow Agent")
     print(f"  http://{host}:{port}")
     print(f"  AI Provider: {config.AI_PROVIDER}")
     print(f"  API Key: {'configured' if has_key else 'MISSING'}")

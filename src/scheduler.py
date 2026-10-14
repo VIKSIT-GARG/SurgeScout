@@ -3,7 +3,7 @@ import asyncio
 import logging
 from . import config
 
-log = logging.getLogger("surgescout.scheduler")
+log = logging.getLogger("signalharbor.scheduler")
 
 
 class PipelineScheduler:

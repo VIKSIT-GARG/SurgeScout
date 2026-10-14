@@ -5,7 +5,7 @@ import subprocess
 
 import pytest
 
-spec = importlib.util.spec_from_file_location('surgescout_setup', Path(__file__).parents[1] / 'setup.py')
+spec = importlib.util.spec_from_file_location('signalharbor_setup', Path(__file__).parents[1] / 'setup.py')
 setup = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup)
 
@@ -65,7 +65,7 @@ def test_fresh_openclaw_uses_background_onboarding_and_global_skill(monkeypatch,
 
 def test_existing_openclaw_configuration_and_skill_preserved(monkeypatch, tmp_path):
     commands = []
-    (tmp_path / '.openclaw/skills/surgescout').mkdir(parents=True)
+    (tmp_path / '.openclaw/skills/signalharbor').mkdir(parents=True)
     (tmp_path / '.openclaw/openclaw.json').write_text('{}')
     monkeypatch.setattr(setup.Path, 'home', lambda: tmp_path)
     monkeypatch.setattr(setup, 'openclaw_install', lambda: '/cli/openclaw')

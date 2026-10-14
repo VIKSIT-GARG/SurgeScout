@@ -20,7 +20,7 @@ def client(monkeypatch):
     return TestClient(app)
 
 
-@pytest.mark.parametrize('path', ['/api/health', '/docs', '/openapi.json', '/static/logo.png', '/unknown'])
+@pytest.mark.parametrize('path', ['/api/health', '/docs', '/openapi.json', '/static/logo.svg', '/unknown'])
 def test_all_resources_require_key(client, path):
     assert client.get(path).status_code == 401
     assert client.get(path, headers={'X-API-Key': 'wrong'}).status_code == 401

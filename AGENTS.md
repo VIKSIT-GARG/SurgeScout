@@ -1,8 +1,8 @@
-# SurgeScout contributor guide
+# SignalHarbor contributor guide
 
 ## Scope
 
-SurgeScout scouts Moltbook, scores projects with an LLM, generates reports and prepares token launch proposals. Current launch operations do not sign transactions or deploy contracts. Publishing to Moltbook is explicit and authenticated. Demo data is fictional.
+SignalHarbor scouts Moltbook, scores projects with an LLM, generates reports and prepares token launch proposals. Current launch operations do not sign transactions or deploy contracts. Publishing to Moltbook is explicit and authenticated. Demo data is fictional.
 
 Phase 1 adds SQLModel/SQLite persistence, async integrations, opt-in APScheduler jobs, API-key middleware and mocked regression coverage. Phases 2–4 in README.md remain future work.
 
@@ -27,7 +27,7 @@ Use `.env.example` for environment settings. OpenRouter is the default provider;
 
 Scheduler defaults are `SCHEDULER_ENABLED=false` and `SCOUT_INTERVAL_MINUTES=60`. Enabling scheduled analysis is explicit and may incur provider charges. Scheduled jobs do not publish reports or deploy tokens. Run a single server process; distributed scheduling and multi-worker mutation coordination are outside this phase.
 
-Live state defaults to `data/surgescout.db`; override with `DATABASE_PATH`. Runtime databases, journals, `.env` and legacy JSON are ignored by Git. Stop the server before a database-file backup. Reverting to pre-Phase-1 code does not export newer SQLite records back to JSON.
+Live state defaults to `data/signalharbor.db`; override with `DATABASE_PATH`. Runtime databases, journals, `.env` and legacy JSON are ignored by Git. Stop the server before a database-file backup. Reverting to pre-Phase-1 code does not export newer SQLite records back to JSON.
 
 ## Development and verification
 

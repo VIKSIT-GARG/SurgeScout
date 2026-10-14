@@ -1,4 +1,4 @@
-"""SurgeScout API server — FastAPI backend powering the agent and dashboard."""
+"""SignalHarbor API server — FastAPI backend powering the agent and dashboard."""
 
 import json
 import asyncio
@@ -22,7 +22,7 @@ from .moltbook import MoltbookClient, scout_moltbook, extract_projects_from_post
 from .analyzer import analyze_project, analyze_batch, generate_launch_report
 from .launcher import SurgeLauncher, launch_pipeline
 
-log = logging.getLogger("surgescout.server")
+log = logging.getLogger("signalharbor.server")
 
 from .scheduler import PipelineScheduler
 
@@ -51,9 +51,9 @@ async def lifespan(application):
 
 
 app = FastAPI(
-    title="SurgeScout",
+    title="SignalHarbor",
     description="AI Deal Flow Agent for Internet Capital Markets on SURGE",
-    version="1.2.1",
+    version="1.2.2",
     lifespan=lifespan,
 )
 
@@ -68,7 +68,7 @@ app.add_middleware(
 from .database import StateStore, DatabaseState
 
 DATA_FILE = os.path.join(config.DATA_DIR, "state.json")
-_store = StateStore(getattr(config, "DATABASE_PATH", os.path.join(config.DATA_DIR, "surgescout.db")), legacy_path=DATA_FILE)
+_store = StateStore(getattr(config, "DATABASE_PATH", os.path.join(config.DATA_DIR, "signalharbor.db")), legacy_path=DATA_FILE)
 _state = DatabaseState(_store)
 _mutation_lock = asyncio.Lock()
 _demo_snapshot = None
@@ -142,9 +142,9 @@ app.mount("/static", StaticFiles(directory=str(_web_dir)), name="static")
 @app.get("/favicon.ico")
 def favicon():
     """Serve favicon."""
-    icon = _web_dir / "logo.png"
+    icon = _web_dir / "logo.svg"
     if icon.exists():
-        return FileResponse(icon, media_type="image/png")
+        return FileResponse(icon, media_type="image/svg+xml")
     return JSONResponse({}, status_code=404)
 
 
@@ -154,7 +154,7 @@ def index():
     html_path = _web_dir / "index.html"
     if html_path.exists():
         return FileResponse(html_path, media_type="text/html")
-    return HTMLResponse("<h1>SurgeScout</h1><p>Dashboard not found. Check web/index.html</p>")
+    return HTMLResponse("<h1>SignalHarbor</h1><p>Dashboard not found. Check web/index.html</p>")
 
 
 @app.get("/api/health")
@@ -322,7 +322,7 @@ async def moltbook_post(req: MoltbookPostRequest):
 
 @app.get("/api/moltbook/posts")
 async def moltbook_user_posts():
-    """Fetch surgescout's published posts from Moltbook."""
+    """Fetch signalharbor's published posts from Moltbook."""
     client = MoltbookClient()
     try:
         posts = await _invoke(client.fetch_user_posts,config.MOLTBOOK_AGENT_NAME, limit=30)
@@ -373,7 +373,7 @@ async def moltbook_report(req: AnalyzeRequest):
     if _state.get("demo_mode"):
         raise HTTPException(409, "Demo reports cannot be published")
     client = MoltbookClient()
-    title = f"[SurgeScout] Analysis: {analysis.get('project_name', '?')} — {analysis.get('verdict', '?')}"
+    title = f"[SignalHarbor] Analysis: {analysis.get('project_name', '?')} — {analysis.get('verdict', '?')}"
     try:
         result = await _invoke(client.post_update,title, report)
     finally:
@@ -679,26 +679,26 @@ def load_demo():
     ]
     _state["moltbook_posts"] = [
         {
-            "title": "Introducing SurgeScout — AI Deal Flow Agent for Internet Capital Markets",
-            "body": "We're building SurgeScout for the SURGE x OpenClaw hackathon on lablab.ai...",
+            "title": "Introducing SignalHarbor — AI Deal Flow Agent for Internet Capital Markets",
+            "body": "We're building SignalHarbor for the SURGE x OpenClaw hackathon on lablab.ai...",
             "result": {"status": "posted", "post_id": "3b38d762"},
             "timestamp": "2026-02-24T16:00:00Z",
         },
         {
-            "title": "SurgeScout Pipeline Demo: Scouted 85 projects, analyzed 5, found 2 launch-ready",
-            "body": "We just ran the full SurgeScout pipeline on live Moltbook data...",
+            "title": "SignalHarbor Pipeline Demo: Scouted 85 projects, analyzed 5, found 2 launch-ready",
+            "body": "We just ran the full SignalHarbor pipeline on live Moltbook data...",
             "result": {"status": "posted", "post_id": "2fb408a0"},
             "timestamp": "2026-02-24T16:05:00Z",
         },
         {
-            "title": "SurgeScout Scoring Model: 5 Dimensions for Evaluating Tokenization Potential",
-            "body": "Here's how SurgeScout evaluates projects for token launches on SURGE...",
+            "title": "SignalHarbor Scoring Model: 5 Dimensions for Evaluating Tokenization Potential",
+            "body": "Here's how SignalHarbor evaluates projects for token launches on SURGE...",
             "result": {"status": "posted", "post_id": "13cdbcc5"},
             "timestamp": "2026-02-24T16:10:00Z",
         },
         {
-            "title": "[SurgeScout] Analysis: SkillForge — STRONG_LAUNCH",
-            "body": "# [LAUNCH] SurgeScout Analysis: SkillForge — Overall Score: 85/100...",
+            "title": "[SignalHarbor] Analysis: SkillForge — STRONG_LAUNCH",
+            "body": "# [LAUNCH] SignalHarbor Analysis: SkillForge — Overall Score: 85/100...",
             "result": {"status": "posted", "post_id": "demo-post-1"},
             "timestamp": "2026-02-24T16:15:00Z",
         },
@@ -730,7 +730,7 @@ def clear_demo():
 
 @app.post("/api/pipeline")
 async def full_pipeline(req: ScoutRequest):
-    """Run the full SurgeScout pipeline: Scout -> Analyze -> Report.
+    """Run the full SignalHarbor pipeline: Scout -> Analyze -> Report.
 
     This is the main autonomous pipeline the OpenClaw agent triggers.
     """

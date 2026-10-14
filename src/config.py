@@ -1,7 +1,8 @@
-"""SurgeScout configuration."""
+"""SignalHarbor configuration."""
 
 import os
 import math
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -43,7 +44,7 @@ def selected_model() -> str:
 # Moltbook
 MOLTBOOK_API_URL = os.getenv("MOLTBOOK_API_URL", "https://www.moltbook.com")
 MOLTBOOK_AUTH_TOKEN = os.getenv("MOLTBOOK_AUTH_TOKEN", "")
-MOLTBOOK_AGENT_NAME = os.getenv("MOLTBOOK_AGENT_NAME", "surgescout")
+MOLTBOOK_AGENT_NAME = os.getenv("MOLTBOOK_AGENT_NAME", "signalharbor")
 MOLTBOOK_SUBMOLT = os.getenv("MOLTBOOK_SUBMOLT", "lablab")
 
 # SURGE / On-chain
@@ -55,7 +56,7 @@ WALLET_PRIVATE_KEY = os.getenv("WALLET_PRIVATE_KEY", "")
 # Server
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8899"))
-SECRET_KEY = os.getenv("SECRET_KEY", "surgescout-dev-key")
+SECRET_KEY = os.getenv("SECRET_KEY", "signalharbor-dev-key")
 API_KEY = os.getenv("API_KEY", "")
 SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "false").lower() in ("1", "true", "yes")
 SCOUT_INTERVAL_MINUTES = float(os.getenv("SCOUT_INTERVAL_MINUTES", "60"))
@@ -65,4 +66,19 @@ if not math.isfinite(SCOUT_INTERVAL_MINUTES) or SCOUT_INTERVAL_MINUTES <= 0:
 # Paths
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
-DATABASE_PATH = os.getenv("DATABASE_PATH") or os.path.join(DATA_DIR, "surgescout.db")
+def resolve_database_path(data_dir: str) -> str:
+    """Preserve a sole existing database when upgrading a renamed installation."""
+    if os.getenv("DATABASE_PATH"):
+        return os.environ["DATABASE_PATH"]
+    preferred = Path(data_dir) / "signalharbor.db"
+    if preferred.exists():
+        return str(preferred)
+    existing = list(Path(data_dir).glob("*.db"))
+    if len(existing) == 1:
+        return str(existing[0])
+    if existing:
+        raise RuntimeError("Multiple existing databases found; set DATABASE_PATH explicitly to preserve your live state.")
+    return str(preferred)
+
+
+DATABASE_PATH = resolve_database_path(DATA_DIR)

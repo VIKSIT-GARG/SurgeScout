@@ -1,8 +1,10 @@
-# SurgeScout
+# SignalHarbor
+
+Current application branding is SignalHarbor. Existing installations retain their configured database, claimed Moltbook identity and external OpenClaw skills. When the new default database does not exist, a sole existing `data/*.db` is reused; multiple candidates require `DATABASE_PATH` to prevent accidental data loss. Renaming the GitHub repository or an external account requires separate account settings; current links point to the maintainer and Moltbook home rather than unverified renamed pages.
 
 **AI Deal Flow Agent for Internet Capital Markets**
 
-SurgeScout is an autonomous AI agent built on [OpenClaw](https://github.com/openclaw/openclaw) that discovers promising projects on [Moltbook](https://www.moltbook.com), analyzes their tokenization potential, and prepares token launch proposals for the [SURGE](https://surge.xyz) launchpad.
+SignalHarbor is an autonomous AI agent built on [OpenClaw](https://github.com/openclaw/openclaw) that discovers promising projects on [Moltbook](https://www.moltbook.com), analyzes their tokenization potential, and prepares token launch proposals for the [SURGE](https://surge.xyz) launchpad.
 
 > Phase 1 adds SQLite persistence, async integrations, API-key protection and an opt-in background scheduler. Real on-chain deployment remains future work.
 
@@ -10,7 +12,7 @@ Current scope: scout → analyze → advise → prepare → generate reports. Pu
 
 ## How It Works
 
-SurgeScout runs this pipeline on demand or at an explicitly enabled interval:
+SignalHarbor runs this pipeline on demand or at an explicitly enabled interval:
 
 ```
 Scout → Analyze → Advise → Launch → Report
@@ -73,10 +75,10 @@ Windows, macOS and Linux are targeted; native Windows/macOS execution has not be
 
 ```bash
 # Copy skill to OpenClaw workspace
-cp -r skill/ ~/.openclaw/workspace/skills/surgescout/
+cp -r skill/ ~/.openclaw/workspace/skills/signalharbor/
 
 # Or tell your OpenClaw agent:
-# "Install the SurgeScout skill from /path/to/SurgeScout/skill"
+# "Install the SignalHarbor skill from /path/to/SignalHarbor/skill"
 ```
 
 ## API Endpoints
@@ -101,7 +103,7 @@ cp -r skill/ ~/.openclaw/workspace/skills/surgescout/
 ## Architecture
 
 ```
-SurgeScout/
+SignalHarbor/
 ├── app.py                      # Entry point (uvicorn server)
 ├── src/
 │   ├── config.py               # Configuration from .env
@@ -145,13 +147,13 @@ SurgeScout/
 | `OPENAI_API_KEY` | - | OpenAI API key |
 | `MOLTBOOK_API_URL` | `https://www.moltbook.com` | Moltbook API |
 | `MOLTBOOK_AUTH_TOKEN` | - | Claimed agent bearer token; never sent outside canonical Moltbook origin |
-| `MOLTBOOK_AGENT_NAME` | `surgescout` | Profile used by dashboard |
+| `MOLTBOOK_AGENT_NAME` | `signalharbor` | Profile used by dashboard |
 | `MOLTBOOK_SUBMOLT` | `lablab` | Default submolt |
 | `SURGE_API_URL` | `https://api.surge.xyz` | SURGE API |
 | `BASE_RPC_URL` | `https://sepolia.base.org` | Base RPC |
 | `WALLET_PRIVATE_KEY` | - | Reserved for future deployment; current release does not use it |
 | `API_KEY` | empty | Required API/dashboard access key; setup generates one; empty fails closed |
-| `DATABASE_PATH` | `data/surgescout.db` | SQLite database file |
+| `DATABASE_PATH` | `data/signalharbor.db` | SQLite database file |
 | `SCHEDULER_ENABLED` | `false` | Explicitly enable recurring paid analysis |
 | `SCOUT_INTERVAL_MINUTES` | `60` | Positive interval between scheduled pipelines |
 
@@ -197,7 +199,7 @@ Hosting templates omit unauthenticated HTTP health probes because `/api/health` 
 
 Scheduling is disabled by default. Set `SCHEDULER_ENABLED=true` and `SCOUT_INTERVAL_MINUTES=60`, then restart to enable it. Scheduled runs can incur provider charges. They prepare proposals and reports but do not publish reports or deploy tokens; demo mode pauses scheduled work. Clear demo mode before running live scouting, analysis or publishing. Run a single server process for scheduling and state mutations; multi-worker/distributed scheduling is outside Phase 1.
 
-Major changes are separate commits. Review `CHANGELOG.md` and `git log --oneline`. To undo a change without rewriting shared history, use `git revert <commit-sha>` then push the revert. Configuration and runtime state are ignored by Git; back up `.env` and the SQLite database separately. Stop the server before copying `data/surgescout.db` (or your configured database file). Preserve the legacy `data/state.json` backup when migrating; reverting to pre-Phase-1 code does not convert new SQLite records back into JSON.
+Major changes are separate commits. Review `CHANGELOG.md` and `git log --oneline`. To undo a change without rewriting shared history, use `git revert <commit-sha>` then push the revert. Configuration and runtime state are ignored by Git; back up `.env` and the SQLite database separately. Stop the server before copying `data/signalharbor.db` (or your configured database file). Preserve the legacy `data/state.json` backup when migrating; reverting to pre-Phase-1 code does not convert new SQLite records back into JSON.
 
 ## Future Roadmap
 
@@ -236,7 +238,7 @@ Make the Launch step deploy actual tokens and close the full loop.
 
 ### Phase 4 — Scale, UX & Ecosystem
 
-Turn SurgeScout from a hackathon project into a real product.
+Turn SignalHarbor from a hackathon project into a real product.
 
 - **React Frontend** — Replace the 841-line monolithic `index.html` with a Next.js + shadcn/ui app: project browser, analysis history, launch tracker, settings page
 - **WebSocket Updates** — Replace dashboard polling with a `/ws` WebSocket connection streaming real-time pipeline events

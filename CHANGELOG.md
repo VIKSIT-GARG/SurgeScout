@@ -1,5 +1,14 @@
 # Version history
 
+## 1.2.2 — 2026-10-14
+
+- Rebranded current application, prompts, reports, logs, launcher metadata, setup paths, OpenClaw skill and documentation to SignalHarbor.
+- Replaced the previous raster mark with a SignalHarbor SVG.
+- Existing databases and external account/skill settings are preserved; Git history remains available for rollback.
+- GitHub repository naming and previously published external posts require separate account-level changes.
+- Validation: 124 tests pass; current tracked/new file contents contain no former project name, and compilation/diff checks pass.
+
+
 ## 1.2.1 — 2026-10-14
 
 - Default LLM provider switched to OpenRouter with free-only model routing and no automatic paid fallback.

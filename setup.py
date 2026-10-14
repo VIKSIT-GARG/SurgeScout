@@ -175,7 +175,7 @@ def openclaw_install():
         return executable
     windows = os.name == 'nt'
     url = 'https://openclaw.ai/install.ps1' if windows else 'https://openclaw.ai/install.sh'
-    with tempfile.TemporaryDirectory(prefix='surgescout-openclaw-') as directory:
+    with tempfile.TemporaryDirectory(prefix='signalharbor-openclaw-') as directory:
         script = Path(directory) / ('install.ps1' if windows else 'install.sh')
         with urllib.request.urlopen(url, timeout=60) as response:
             script.write_bytes(response.read())
@@ -205,11 +205,11 @@ def manage_openclaw(action):
             print('openclaw models auth login --provider openrouter --method api-key')
             print('openclaw models set openrouter/openrouter/free')
             print('OpenRouter auto and other models may be paid; select the free router explicitly.')
-        managed_skill = Path.home() / '.openclaw/skills/surgescout'
+        managed_skill = Path.home() / '.openclaw/skills/signalharbor'
         if not managed_skill.exists():
-            run([executable, 'skills', 'install', str(ROOT / 'skill'), '--as', 'surgescout', '--global'])
+            run([executable, 'skills', 'install', str(ROOT / 'skill'), '--as', 'signalharbor', '--global'])
         else:
-            print('Existing SurgeScout OpenClaw skill preserved; review before replacing it.')
+            print('Existing SignalHarbor OpenClaw skill preserved; review before replacing it.')
         run([executable, 'gateway', 'install'])
         run([executable, 'gateway', 'start'])
         run([executable, 'gateway', 'status'])

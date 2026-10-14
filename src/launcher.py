@@ -7,7 +7,7 @@ import httpx
 
 from . import config
 
-log = logging.getLogger("surgescout.launcher")
+log = logging.getLogger("signalharbor.launcher")
 
 # ---------------------------------------------------------------------------
 # SURGE Launchpad Client
@@ -163,9 +163,9 @@ async def launch_pipeline(analysis: dict, chain: str = "base") -> dict:
         "description": analysis.get("summary", ""),
         "chain": chain,
         "metadata": {
-            "surgescout_score": analysis.get("overall_score", 0),
-            "surgescout_verdict": verdict,
-            "source": "surgescout",
+            "signalharbor_score": analysis.get("overall_score", 0),
+            "signalharbor_verdict": verdict,
+            "source": "signalharbor",
         },
     }
 
