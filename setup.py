@@ -18,6 +18,7 @@ import tempfile
 import threading
 import time
 import urllib.request
+import urllib.error
 import venv
 import webbrowser
 import warnings
@@ -37,6 +38,7 @@ def create_env(root=ROOT):
     content = (root / '.env.example').read_text(encoding='utf-8')
     content = re.sub(r'(?m)^(ANTHROPIC_API_KEY|OPENAI_API_KEY)=.*$', r'\1=', content)
     content = re.sub(r'(?m)^SECRET_KEY=.*$', 'SECRET_KEY=' + secrets.token_urlsafe(32), content)
+    content = re.sub(r'(?m)^API_KEY=.*$', 'API_KEY=' + secrets.token_urlsafe(32), content) if re.search(r'(?m)^API_KEY=', content) else content.rstrip('\n') + '\nAPI_KEY=' + secrets.token_urlsafe(32) + '\n'
     # Exclusive creation also preserves a concurrent user's config.
     try:
         with path.open('x', encoding='utf-8') as handle:
@@ -47,6 +49,27 @@ def create_env(root=ROOT):
         return False
     return True
 
+
+
+def ensure_api_key(root=ROOT):
+    """Provision missing dashboard auth atomically while preserving existing values."""
+    path = root / '.env'
+    if not path.exists():
+        return False
+    content = path.read_text(encoding='utf-8')
+    if os.environ.get('API_KEY') or env_values(content).get('API_KEY'):
+        return False
+    line = 'API_KEY=' + secrets.token_urlsafe(32)
+    content = re.sub(r'(?m)^API_KEY=.*$', line, content) if re.search(r'(?m)^API_KEY=', content) else content.rstrip('\n') + '\n' + line + '\n'
+    descriptor, temporary = tempfile.mkstemp(prefix='.env-auth-', dir=root)
+    try:
+        with os.fdopen(descriptor, 'w', encoding='utf-8') as handle:
+            handle.write(content)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return True
 
 
 def env_values(content):
@@ -188,6 +211,11 @@ def browser_when_ready(port, process):
                 if response.status == 200:
                     webbrowser.open(url)
                     return
+        except urllib.error.HTTPError as error:
+            if error.code == 401 and error.headers.get('WWW-Authenticate') == 'ApiKey':
+                webbrowser.open(url)
+                return
+            time.sleep(0.5)
         except OSError:
             time.sleep(0.5)
 
@@ -211,6 +239,7 @@ def main(argv=None):
         return 0
     python = prepare_python()
     created = create_env()
+    ensure_api_key()
     if not args.no_launch and sys.stdin.isatty() and (created or args.configure):
         configure_credentials()
     (ROOT / 'data').mkdir(exist_ok=True)
@@ -219,6 +248,7 @@ def main(argv=None):
     print('Setup complete. Existing settings preserved. To add live credentials later, rerun with --configure.')
     if args.no_launch:
         return 0
+    print('Unlock the dashboard with API_KEY from .env (or your API_KEY environment variable). Do not share it.')
     env = os.environ.copy()
     env['PORT'] = str(args.port)
     process = subprocess.Popen([str(python), str(ROOT / 'app.py'), '--host', '127.0.0.1', '--port', str(args.port)], cwd=ROOT, env=env)

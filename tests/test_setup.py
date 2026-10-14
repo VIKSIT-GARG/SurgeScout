@@ -119,3 +119,34 @@ def test_credential_line_injection_rejected(monkeypatch, tmp_path):
     with pytest.raises(RuntimeError):
         setup.configure_credentials(tmp_path)
     assert (tmp_path / '.env').read_text() == 'AI_PROVIDER=anthropic\n'
+
+
+def test_dashboard_key_generated_and_preserved(tmp_path, monkeypatch):
+    monkeypatch.delenv('API_KEY', raising=False)
+    (tmp_path / '.env').write_text('PORT=8899\nAPI_KEY=\n')
+    assert setup.ensure_api_key(tmp_path)
+    content = (tmp_path / '.env').read_text()
+    assert len(setup.env_values(content)['API_KEY']) >= 32
+    assert not setup.ensure_api_key(tmp_path)
+    assert (tmp_path / '.env').read_text() == content
+    if setup.os.name != 'nt':
+        assert (tmp_path / '.env').stat().st_mode & 0o777 == 0o600
+
+
+def test_browser_opens_when_authenticated_server_ready(monkeypatch):
+    import urllib.error
+    opened = []
+    monkeypatch.setattr(setup.urllib.request, 'urlopen', lambda *a, **k: (_ for _ in ()).throw(urllib.error.HTTPError(a[0], 401, 'Unauthorized', {'WWW-Authenticate': 'ApiKey'}, None)))
+    monkeypatch.setattr(setup.webbrowser, 'open', opened.append)
+    process = type('Process', (), {'poll': lambda self: None})()
+    setup.browser_when_ready(8899, process)
+    assert opened == ['http://127.0.0.1:8899']
+
+
+def test_browser_does_not_open_unrelated_unauthorized_service(monkeypatch):
+    import urllib.error
+    monkeypatch.setattr(setup.urllib.request, 'urlopen', lambda *a, **k: (_ for _ in ()).throw(urllib.error.HTTPError(a[0], 401, 'Unauthorized', {}, None)))
+    monkeypatch.setattr(setup.webbrowser, 'open', lambda _: pytest.fail('unrelated service'))
+    monkeypatch.setattr(setup.time, 'sleep', lambda _: None)
+    process = type('Process', (), {'poll': lambda self: None})()
+    setup.browser_when_ready(8899, process)
