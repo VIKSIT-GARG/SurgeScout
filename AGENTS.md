@@ -23,7 +23,7 @@ Phase 1 adds SQLModel/SQLite persistence, async integrations, opt-in APScheduler
 
 Python 3.12+ is required. Run `bash setup.sh` on Linux/macOS, `setup.cmd` on Windows or `python setup.py` with an existing compatible Python. First installation requires internet access. Native Windows/macOS setup and credentialed external-service flows need separate validation.
 
-Use `.env.example` for environment settings. Set a provider key for live analysis, `MOLTBOOK_AUTH_TOKEN` for authenticated publishing and `API_KEY` for HTTP access. The setup script provisions an API access key. Enter it in the dashboard or send `X-API-Key` from HTTP clients. Keys are secrets; do not commit or log them.
+Use `.env.example` for environment settings. OpenRouter is the default provider; set `OPENROUTER_API_KEY` for live analysis. Its model must be `openrouter/free` or end in `:free`; paid OpenRouter routing and automatic paid-provider fallback are prohibited. Legacy providers require explicit selection. Set `MOLTBOOK_AUTH_TOKEN` for authenticated publishing and `API_KEY` for HTTP access. The setup script provisions an API access key. Enter it in the dashboard or send `X-API-Key` from HTTP clients. Keys are secrets; do not commit or log them.
 
 Scheduler defaults are `SCHEDULER_ENABLED=false` and `SCOUT_INTERVAL_MINUTES=60`. Enabling scheduled analysis is explicit and may incur provider charges. Scheduled jobs do not publish reports or deploy tokens. Run a single server process; distributed scheduling and multi-worker mutation coordination are outside this phase.
 

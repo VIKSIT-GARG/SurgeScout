@@ -11,10 +11,10 @@ spec.loader.exec_module(setup)
 
 
 def test_env_created_private_and_placeholders_cleared(tmp_path):
-    (tmp_path / '.env.example').write_text('ANTHROPIC_API_KEY=sk-ant-...\nOPENAI_API_KEY=sk-...\nSECRET_KEY=dev\nPORT=8899\n')
+    (tmp_path / '.env.example').write_text('ANTHROPIC_API_KEY=sk-ant-...\nOPENAI_API_KEY=sk-...\nOPENROUTER_API_KEY=sk-or-...\nSECRET_KEY=dev\nPORT=8899\n')
     assert setup.create_env(tmp_path)
     text = (tmp_path / '.env').read_text()
-    assert 'sk-ant-' not in text and 'sk-...' not in text
+    assert 'sk-ant-' not in text and 'sk-...' not in text and 'sk-or-' not in text
     assert 'SECRET_KEY=dev' not in text
     assert 'PORT=8899' in text
     if setup.os.name != 'nt':
@@ -57,8 +57,9 @@ def test_fresh_openclaw_uses_background_onboarding_and_global_skill(monkeypatch,
     monkeypatch.setattr(setup, 'openclaw_install', lambda: '/cli/openclaw')
     monkeypatch.setattr(setup, 'run', commands.append)
     setup.manage_openclaw('setup')
-    assert commands[0][1:] == ['onboard', '--classic', '--install-daemon', '--skip-ui']
-    assert '--global' in commands[1]
+    assert commands[0][1:] == ['onboard', '--classic', '--install-daemon', '--skip-ui', '--auth-choice', 'openrouter-api-key']
+    assert commands[1][1:] == ['models', 'set', 'openrouter/openrouter/free']
+    assert '--global' in commands[2]
     assert commands[-1][1:] == ['gateway', 'status']
 
 
@@ -70,15 +71,16 @@ def test_existing_openclaw_configuration_and_skill_preserved(monkeypatch, tmp_pa
     monkeypatch.setattr(setup, 'openclaw_install', lambda: '/cli/openclaw')
     monkeypatch.setattr(setup, 'run', commands.append)
     setup.manage_openclaw('setup')
-    assert all('onboard' not in command and 'skills' not in command for command in commands)
+    assert all('onboard' not in command and 'skills' not in command and 'models' not in command for command in commands)
 
 
 def test_guided_credentials_hidden_and_existing_values_preserved(monkeypatch, tmp_path, capsys):
     (tmp_path / '.env').write_text('AI_PROVIDER=anthropic\nANTHROPIC_API_KEY=\nOPENAI_API_KEY=\nSECRET_KEY=keep\n')
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    monkeypatch.delenv('OPENROUTER_API_KEY', raising=False)
     monkeypatch.delenv('MOLTBOOK_AUTH_TOKEN', raising=False)
-    monkeypatch.setattr('builtins.input', lambda _: '2')
+    monkeypatch.setattr('builtins.input', lambda _: '3')
     secrets = iter(['test-secret-key', 'private-token'])
     monkeypatch.setattr(setup.getpass, 'getpass', lambda _: next(secrets))
     assert setup.configure_credentials(tmp_path)
@@ -112,6 +114,7 @@ def test_credential_line_injection_rejected(monkeypatch, tmp_path):
     (tmp_path / '.env').write_text('AI_PROVIDER=anthropic\n')
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    monkeypatch.delenv('OPENROUTER_API_KEY', raising=False)
     monkeypatch.delenv('MOLTBOOK_AUTH_TOKEN', raising=False)
     monkeypatch.setattr('builtins.input', lambda _: '1')
     secrets = iter(['key\nPORT=1', ''])
@@ -150,3 +153,27 @@ def test_browser_does_not_open_unrelated_unauthorized_service(monkeypatch):
     monkeypatch.setattr(setup.time, 'sleep', lambda _: None)
     process = type('Process', (), {'poll': lambda self: None})()
     setup.browser_when_ready(8899, process)
+
+
+def test_explicit_configuration_switches_provider_without_deleting_keys(monkeypatch, tmp_path):
+    (tmp_path / '.env').write_text('AI_PROVIDER=anthropic\nANTHROPIC_API_KEY=legacy-key\nAI_MODEL=claude-model\nMOLTBOOK_AUTH_TOKEN=token\n')
+    monkeypatch.delenv('OPENROUTER_API_KEY', raising=False)
+    monkeypatch.setattr('builtins.input', lambda _: '')
+    monkeypatch.setattr(setup.getpass, 'getpass', lambda _: 'router-key')
+    assert setup.configure_credentials(tmp_path, select_provider=True)
+    values = setup.env_values((tmp_path / '.env').read_text())
+    assert values['AI_PROVIDER'] == 'openrouter'
+    assert values['AI_MODEL'] == 'openrouter/free'
+    assert values['OPENROUTER_API_KEY'] == 'router-key'
+    assert values['ANTHROPIC_API_KEY'] == 'legacy-key'
+
+
+def test_default_setup_uses_openrouter_hidden_prompt(monkeypatch, tmp_path):
+    (tmp_path / '.env').write_text('AI_PROVIDER=openrouter\nOPENROUTER_API_KEY=\nMOLTBOOK_AUTH_TOKEN=token\n')
+    monkeypatch.delenv('OPENROUTER_API_KEY', raising=False)
+    monkeypatch.setattr('builtins.input', lambda _: '')
+    monkeypatch.setattr(setup.getpass, 'getpass', lambda _: 'router-key')
+    assert setup.configure_credentials(tmp_path)
+    values = setup.env_values((tmp_path / '.env').read_text())
+    assert values['AI_PROVIDER'] == 'openrouter'
+    assert values['AI_MODEL'] == 'openrouter/free'

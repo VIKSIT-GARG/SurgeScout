@@ -36,7 +36,7 @@ def create_env(root=ROOT):
     if path.exists():
         return False
     content = (root / '.env.example').read_text(encoding='utf-8')
-    content = re.sub(r'(?m)^(ANTHROPIC_API_KEY|OPENAI_API_KEY)=.*$', r'\1=', content)
+    content = re.sub(r'(?m)^(ANTHROPIC_API_KEY|OPENAI_API_KEY|OPENROUTER_API_KEY)=.*$', r'\1=', content)
     content = re.sub(r'(?m)^SECRET_KEY=.*$', 'SECRET_KEY=' + secrets.token_urlsafe(32), content)
     content = re.sub(r'(?m)^API_KEY=.*$', 'API_KEY=' + secrets.token_urlsafe(32), content) if re.search(r'(?m)^API_KEY=', content) else content.rstrip('\n') + '\nAPI_KEY=' + secrets.token_urlsafe(32) + '\n'
     # Exclusive creation also preserves a concurrent user's config.
@@ -92,21 +92,31 @@ def hidden_input(prompt):
             raise RuntimeError("Secure credential input requires an interactive terminal.") from error
 
 
-def configure_credentials(root=ROOT):
-    """Ask only for missing credentials; never echo them or replace existing keys."""
+def configure_credentials(root=ROOT, select_provider=False):
+    """Fill missing keys, or explicitly switch provider while retaining old credentials."""
     path = root / '.env'
     content = path.read_text(encoding='utf-8')
     values = env_values(content)
     updates = {}
-    has_key = any(os.environ.get(key) or values.get(key) for key in ('ANTHROPIC_API_KEY', 'OPENAI_API_KEY'))
-    if not has_key:
-        provider = input('AI provider: [1] Anthropic, [2] OpenAI, [Enter] skip for now: ').strip()
-        if provider in ('1', '2'):
-            key_name = 'ANTHROPIC_API_KEY' if provider == '1' else 'OPENAI_API_KEY'
-            key = hidden_input('Provider API key (hidden; Enter to skip): ').strip()
+    provider_keys = {'openrouter': 'OPENROUTER_API_KEY', 'anthropic': 'ANTHROPIC_API_KEY', 'openai': 'OPENAI_API_KEY'}
+    active = os.environ.get('AI_PROVIDER') or values.get('AI_PROVIDER', 'openrouter')
+    key_name = provider_keys.get(active)
+    has_key = key_name and (os.environ.get(key_name) or values.get(key_name))
+    if select_provider or not has_key:
+        choice = input('AI provider: [1/Enter] OpenRouter free models, [2] Anthropic, [3] OpenAI: ').strip()
+        selected = {'': 'openrouter', '1': 'openrouter', '2': 'anthropic', '3': 'openai'}.get(choice)
+        if selected:
+            key_name = provider_keys[selected]
+            existing = os.environ.get(key_name) or values.get(key_name)
+            key = existing or hidden_input('Provider API key (hidden; Enter to skip): ').strip()
             if key:
-                updates['AI_PROVIDER'] = 'anthropic' if provider == '1' else 'openai'
-                updates[key_name] = key
+                updates['AI_PROVIDER'] = selected
+                if not existing:
+                    updates[key_name] = key
+                if selected != active:
+                    updates['AI_MODEL'] = 'openrouter/free' if selected == 'openrouter' else ''
+                elif selected == 'openrouter' and not values.get('AI_MODEL'):
+                    updates['AI_MODEL'] = 'openrouter/free'
     if not (os.environ.get('MOLTBOOK_AUTH_TOKEN') or values.get('MOLTBOOK_AUTH_TOKEN')):
         token = hidden_input('Optional Moltbook token (hidden; Enter to skip): ').strip()
         if token:
@@ -187,8 +197,14 @@ def manage_openclaw(action):
         # Guided setup owns credential entry and preserves existing configuration.
         # Skip onboarding when already configured; never reset an existing agent.
         if not (Path.home() / '.openclaw/openclaw.json').exists():
-            print('OpenClaw needs provider authorization. Follow its guided prompts.')
-            run([executable, 'onboard', '--classic', '--install-daemon', '--skip-ui'])
+            print('OpenClaw needs OpenRouter authorization. Follow its guided prompts; free models have limits.')
+            run([executable, 'onboard', '--classic', '--install-daemon', '--skip-ui', '--auth-choice', 'openrouter-api-key'])
+            run([executable, 'models', 'set', 'openrouter/openrouter/free'])
+        else:
+            print('Existing OpenClaw configuration preserved. To use free OpenRouter models, run:')
+            print('openclaw models auth login --provider openrouter --method api-key')
+            print('openclaw models set openrouter/openrouter/free')
+            print('OpenRouter auto and other models may be paid; select the free router explicitly.')
         managed_skill = Path.home() / '.openclaw/skills/surgescout'
         if not managed_skill.exists():
             run([executable, 'skills', 'install', str(ROOT / 'skill'), '--as', 'surgescout', '--global'])
@@ -224,7 +240,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--openclaw', choices=['setup', 'start', 'stop', 'restart', 'status'],
                         help='Opt in to optional OpenClaw installation or manage its Gateway service')
-    parser.add_argument('--configure', action='store_true', help='Guide missing API credential setup in an interactive terminal')
+    parser.add_argument('--configure', action='store_true', help='Select AI provider and guide API credential setup in an interactive terminal')
     parser.add_argument('--no-launch', action='store_true', help='Install/configure only')
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--port', type=int, default=8899)
@@ -241,7 +257,7 @@ def main(argv=None):
     created = create_env()
     ensure_api_key()
     if not args.no_launch and sys.stdin.isatty() and (created or args.configure):
-        configure_credentials()
+        configure_credentials(select_provider=args.configure)
     (ROOT / 'data').mkdir(exist_ok=True)
     if args.openclaw:
         manage_openclaw(args.openclaw)

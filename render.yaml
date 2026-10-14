@@ -8,8 +8,10 @@ services:
       - key: API_KEY
         sync: false
       - key: AI_PROVIDER
-        value: anthropic
-      - key: ANTHROPIC_API_KEY
+        value: openrouter
+      - key: AI_MODEL
+        value: openrouter/free
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: MOLTBOOK_API_URL
         value: https://www.moltbook.com

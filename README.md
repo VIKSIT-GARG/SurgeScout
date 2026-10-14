@@ -43,7 +43,7 @@ Each project is evaluated on 5 dimensions:
 ## Features
 
 - **Scouting** — Scans Moltbook submolts for project signals, on demand or with opt-in scheduling
-- **LLM Analysis** — Deep project evaluation via Claude or GPT
+- **LLM Analysis** — Deep project evaluation via OpenRouter free models (default); explicit legacy provider support
 - **Tokenomics Engine** — Generates ticker, supply, bonding curve recommendations
 - **Launch Preparation** — Generates proposed Base/Solana token settings; does not deploy or sign transactions
 - **Moltbook Reporting** — Submits authenticated reports to your configured submolt; account claiming and verification may be required
@@ -63,7 +63,7 @@ Clone or download this repository, then run one command from its folder:
 | Windows | `setup.cmd` |
 | Existing Python 3.12+ | `python setup.py` |
 
-The script provisions Python when needed, creates an isolated environment, installs dependencies, creates configuration without overwriting it, starts the local dashboard and opens your browser. On first interactive launch the script securely asks for your provider and API key; use `--configure` later to add missing credentials. Live analysis needs a provider API key; reporting needs a claimed Moltbook account and token. First installation needs internet access. OS permissions and account authorization may still prompt you.
+The script provisions Python when needed, creates an isolated environment, installs dependencies, creates configuration without overwriting it, starts the local dashboard and opens your browser. On first interactive launch the script securely asks for your provider and API key; use `--configure` later to switch an existing installation to OpenRouter or add missing credentials. OpenRouter free-model analysis needs an OpenRouter API key; reporting needs a claimed Moltbook account and token. First installation needs internet access. OS permissions and account authorization may still prompt you.
 
 For OpenClaw installation, skill installation, guided authorization and Gateway service setup, append `--openclaw setup`. Manage it with `--openclaw start`, `stop`, `restart` or `status`. Use `--no-launch` to install without starting the dashboard, `--no-browser` to suppress browser opening, or `--port 3000` for another port. Existing OpenClaw configuration and installed skills are preserved.
 
@@ -129,7 +129,7 @@ SurgeScout/
 
 - **Optional orchestration**: [OpenClaw](https://github.com/openclaw/openclaw) — self-hosted AI agent
 - **Backend**: Python + FastAPI, SQLModel/SQLite, APScheduler
-- **AI**: Anthropic Claude / OpenAI GPT (configurable)
+- **AI**: OpenRouter free models through the async OpenAI-compatible SDK (default)
 - **Launch proposals**: Base/Solana configuration only; real on-chain integration is future work
 - **Social**: Moltbook API (agent posting)
 - **Frontend**: Tailwind CSS, Chart.js, marked.js
@@ -138,8 +138,9 @@ SurgeScout/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AI_PROVIDER` | `anthropic` | LLM provider |
-| `AI_MODEL` | provider default | Optional model override |
+| `AI_PROVIDER` | `openrouter` | Default free provider; legacy Anthropic/OpenAI are explicit opt-ins |
+| `AI_MODEL` | `openrouter/free` for OpenRouter | OpenRouter accepts only this router or model IDs ending in `:free` |
+| `OPENROUTER_API_KEY` | - | Required for live OpenRouter analysis |
 | `ANTHROPIC_API_KEY` | - | Claude API key |
 | `OPENAI_API_KEY` | - | OpenAI API key |
 | `MOLTBOOK_API_URL` | `https://www.moltbook.com` | Moltbook API |
@@ -153,6 +154,32 @@ SurgeScout/
 | `DATABASE_PATH` | `data/surgescout.db` | SQLite database file |
 | `SCHEDULER_ENABLED` | `false` | Explicitly enable recurring paid analysis |
 | `SCOUT_INTERVAL_MINUTES` | `60` | Positive interval between scheduled pipelines |
+
+## Free API configuration
+
+The default uses OpenRouter's zero-price `openrouter/free` router. Requests use only that router or a specific model ID ending in `:free`; paid OpenRouter models and `openrouter/auto` are rejected before any LLM request. There is no automatic fallback to a paid provider. Anthropic/OpenAI remain available only when explicitly selected for compatibility.
+
+Create a key at [OpenRouter keys](https://openrouter.ai/keys), then run `python setup.py --configure` (or `bash setup.sh --configure` / `setup.cmd --configure`). Choose OpenRouter and enter the key in the hidden prompt. Existing installations preserve their provider until explicitly switched. Environment variables override `.env`; remove an old exported `AI_PROVIDER` or `AI_MODEL` if it keeps selecting a legacy provider/model.
+
+```dotenv
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_key_here
+AI_MODEL=openrouter/free
+```
+
+| Service / credential | Needed now? | Free configuration |
+|---|---|---|
+| OpenRouter / `OPENROUTER_API_KEY` | Live LLM analysis | `openrouter/free`; rate limits, capacity and model variation apply |
+| Moltbook / `MOLTBOOK_AUTH_TOKEN` | Publishing only | Public scouting requires no token; publishing uses your claimed agent token, not a developer identity-app key |
+| Local API / `API_KEY` | Dashboard/API access | Random local secret generated by setup; no external account or charge |
+| SQLite | Live state | Local database; no database API subscription |
+| OpenClaw | Optional orchestration | Self-hosted; its LLM provider must also be configured for a free model |
+| SURGE, Base/Solana RPC, wallet key | Not used by the current pipeline | Proposals are prepared locally; no RPC subscription, launchpad key or wallet key needed |
+| GitHub API key | Not needed for Phase 1 | GitHub enrichment remains Phase 2 |
+
+Free inference is quota-limited, not unlimited production capacity. Free-router model selection can change between requests, so scoring consistency is not guaranteed. Keep the scheduler off for manual demos, or choose a long interval within your account's quota; retries and other applications also consume it. Inspect remaining free requests at OpenRouter's authenticated `GET /api/v1/key` endpoint. Do not enable paid fallbacks or purchase credits to run this default configuration.
+
+Sources: [Free router](https://openrouter.ai/openrouter/free), [OpenRouter limits](https://openrouter.ai/docs/api_reference/limits), [OpenClaw provider setup](https://docs.openclaw.ai/providers/openrouter). Free tiers and availability may change. No real OpenRouter key is included, and credentialed inference requires separate validation.
 
 ## Validation and Rollback
 

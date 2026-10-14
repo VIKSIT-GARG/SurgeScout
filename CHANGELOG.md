@@ -1,5 +1,12 @@
 # Version history
 
+## 1.2.1 — 2026-10-14
+
+- Default LLM provider switched to OpenRouter with free-only model routing and no automatic paid fallback.
+- Secure setup supports OpenRouter key entry and explicit migration from legacy providers.
+- Documented required/optional credentials and free configuration; quota and availability limits remain.
+- 123 mocked tests pass, including OpenRouter request/authentication payloads, quota errors without paid fallback, and provider switching. Live OpenRouter requests remain unverified without a supplied key.
+
 ## 1.2.0 — 2026-10-14
 
 - Phase 1: SQLModel-backed SQLite persistence and legacy JSON migration; demo fixtures remain isolated.
